@@ -1,0 +1,93 @@
+<html>
+<head>
+    <title>SOAP JavaScript Client Test</title>
+</head>
+<body>
+	Change GH3 IP Address : <input type="text" id="gh3ipaddress" value="192.168.1.112">
+	
+	    <script type="text/javascript">
+	var gh3ip;
+	var thumbs = new Array();
+
+	
+	 function init() {
+			gh3ip = document.getElementById('gh3ipaddress').value;
+			window.open('http://'+ gh3ip +'/cam.cgi?mode=camcmd&value=playmode', 'resultsBrowseJPG');
+            var xmlhttp1 = new XMLHttpRequest();
+			var url1 = 'http://'+gh3ip+'/cam.cgi?mode=get_content_info';
+			var page = 1;
+			var start = 0;
+            xmlhttp1.open('GET', url1, false);
+			xmlhttp1.send();
+			var numberOfPic  = xmlhttp1.responseXML.getElementsByTagName('total_content_number').item(0).firstChild.nodeValue;
+			document.write('number of pictures stored on the GH3 : '+numberOfPic+'<br>');
+			while (numberOfPic > 35) {
+			document.write ('<input type="button" target="resultsBrowseJPG" value="page'+ page +'" onclick="soap('+ start +')";/>');
+			start = start + 35;
+			numberOfPic = numberOfPic - 35;
+			page = page + 1;
+			}
+			document.write ('<input type="button" target="resultsBrowseJPG" value="page'+ page +'" onclick="soap('+ start +')";/>');
+        }
+	
+	
+        function soap(start) {
+			parent.frames[1].location.href ="resultsBrowseJPG.html";
+			var thumbs = new Array();
+            var xmlhttp = new XMLHttpRequest();
+			var url = 'http://'+gh3ip+':60606/Server0/CDS_control';
+            xmlhttp.open('POST', url, true);
+
+            var sr =
+                '<?xml version="1.0" encoding="utf-8"?>' + '\r\n' +
+                '<s:Envelope ' + 
+                    'xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ' + 
+                    's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"> ' + '\r\n' +
+                    ' <s:Body>' + '\r\n' +
+                        '  <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1" xmlns:pana="urn:schemas-panasonic-com:pana">' + '\r\n' +
+                            '   <ObjectID>0</ObjectID>' + '\r\n' +
+                            '   <BrowseFlag>BrowseDirectChildren</BrowseFlag>' + '\r\n' +
+                        '   <Filter>*</Filter>' + '\r\n' +
+						'   <StartingIndex>'+start+'</StartingIndex>' + '\r\n' +
+						'   <RequestedCount>35</RequestedCount>' + '\r\n' +
+						'   <SortCriteria></SortCriteria>' + '\r\n' +
+						'   <pana:X_FromCP>LumixLink2.0</pana:X_FromCP>' + '\r\n' +
+						'  </u:Browse>' + '\r\n' +
+						' </s:Body>' + '\r\n' +
+						'</s:Envelope>'+ '\r\n';
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4) {
+                    if (xmlhttp.status == 200) {
+
+                        //alert('response finished');
+						var response = xmlhttp.responseText;
+						var i = 0;
+						var offset2 = 0;
+						
+						while (response.indexOf("CAM_TN") != -1) {
+						var offset = response.indexOf("CAM_TN");
+						thumbs[i] = response.substring(offset+16, offset+65);
+						offset2 = thumbs[i].indexOf("res");
+						thumbs[i] = thumbs[i].substring(0, offset2-5);
+						response = response.substring(offset+58);
+						i++;
+						}
+						for (i2=0;i2<thumbs.length;i2++) {
+						offset3 = thumbs[i2].indexOf("D");
+						parent.frames[1].document.write("<TR>");
+						parent.frames[1].document.write('<a href="'+thumbs[i2].replace(/T/g, "O")+'"download="'+thumbs[i2].replace(/T/g, "O").substring(offset3)+'"><img  src="'+thumbs[i2]+'"/></a>');
+						parent.frames[1].document.write("</TR>");
+						parent.frames[1].document.write("</table>");
+						}
+						}
+						}
+						}
+						xmlhttp.setRequestHeader('Content-Type', 'text/xml; charset="utf-8"');
+						xmlhttp.setRequestHeader('SOAPACTION', '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"');
+						xmlhttp.send(sr);						
+        }
+    </script>
+            <input type="button" value="Load" onclick="init();" />
+</body>
+<html>

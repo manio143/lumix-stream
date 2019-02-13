@@ -1,0 +1,370 @@
+<head>
+<link rel="stylesheet" type="text/css" href="requests.css">
+<SCRIPT language="javascript" src="jquery.js"></SCRIPT>
+</head>
+<BODY bgcolor="#013259">
+<div id="header">
+
+<script>
+var lumixaddress="192.168.54.1";
+</script>
+
+<script>
+	function keepAlive()
+	{
+		window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=recmode", 'hidden');
+		window.open("http://" + lumixaddress + "/cam.cgi?mode=startstream&value=49199", 'results');
+		streamtimer = setInterval( function(){ 
+			window.open("http://" + lumixaddress + "/cam.cgi?mode=getstate", 'hidden');
+		}, 10000 );
+	}
+	keepAlive();
+</script>
+<b>Lumix Web Focus Stacking Control</b>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Focus Stacking code -->
+
+<div id="focusstack">
+
+<b>Focus Stacking:</b>
+
+
+	<FORM name="focusstackform">
+
+Number of shots per image:
+	<INPUT type="text" name="nbrshotperimage" value="10" style="width:50;margin-left:20;margin-right:18">
+
+
+Interval per image (in ms):
+
+	<INPUT type="text" name="focusstackinterval" value="10000" style="width:50;margin-left:20;margin-right:18">
+	</FORM>
+
+
+
+</div>
+<div id="clicker5">
+
+<p id="focusstackid">"Start Focus Stacking"
+
+	<script>
+	var elapsedtime = 0;
+	var count = 0;
+	var direction = 1;
+	var state = "Inactive"
+	var timeout5, clicker5 = $('#clicker5');
+	var timeperaction = 250;
+	var actualnbrshot = 0;
+	var actualtimeperimage = 0;
+
+	function execute_stack() {
+		actualnbrshot = document.forms["focusstackform"].elements["nbrshotperimage"].value;
+		actualtimeperimage = document.forms["focusstackform"].elements["focusstackinterval"].value;
+
+		if (3 * actualnbrshot * timeperaction > actualtimeperimage) {
+			actualtimeperimage = 2 * actualnbrshot * timeperaction;
+		}
+		elapsedtime = elapsedtime + timeperaction; 
+
+		if ((direction != 1) && (direction != 2)) {
+			if (elapsedtime >= actualtimeperimage) {
+				elapsedtime = 0;
+				count = 0;
+				direction = 1
+			} else {
+				state = "Waiting next sequence";
+			}
+		}
+
+
+		if (direction == 2) {
+			if (count > 0) {
+				count = count - 1;
+				window.open("http://" + lumixaddress + "/cam.cgi?mode=camctrl&type=focus&value=wide-normal", 'results');
+				state = "Restoring focus";
+			} else {
+				direction = 3;
+			}
+		}
+
+		if (direction == 1) {
+			if (count < actualnbrshot) {
+				count = count + 1;
+	         		window.open("http://" + lumixaddress + "/cam.cgi?mode=camctrl&type=focus&value=tele-normal", 'results');
+				window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=capture", 'results');
+				state = "Advancing focus  and taking pictures";
+
+			} else {
+				direction = 2;
+			}
+		}
+
+		document.getElementById("focusstackid").innerHTML = "Focus Stacking: STARTED</br>Pictures: " + count + "/" + actualnbrshot + "</br>State: " + state + "</br>Elapsed time: " + elapsedtime + "/" + actualtimeperimage + " ms.";
+
+	}
+
+
+
+	
+	clicker5.mousedown(function(){
+
+		if (this.style.background=='green'){
+			this.style.background='red'
+   			clearInterval(timeout5);
+			document.getElementById("focusstackid").innerHTML = "Focus Stacking: STOPPED";
+			count = 0;
+			direction = 1;		
+		} else {
+
+			this.style.background='green'
+			document.getElementById("focusstackid").innerHTML = "Focus Stacking: STARTED";			
+
+			execute_stack();
+			timeout5 = setInterval(function(){
+				execute_stack();
+			}, timeperaction );
+			
+		}
+
+
+
+
+		return false;
+	});
+
+	</script>
+	</div>
+
+
+<!-- End of Focus Stacking code -->
+
+
+
+
+
+
+
+
+<div id="cclicker"><br>SHOOT<br>
+	<script>
+	var cclicker = $('#cclicker');
+	var mousedoc = false;
+	cclicker.mousedown(function(){
+		this.style.background='grey';
+        window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=capture", 'results');
+		mousedoc = true;
+		return false;
+	});
+
+	cclicker.mouseup(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=capture_cancel", 'results');
+	this.style.background='white';
+	mousedoc = false;
+    return false;
+	});
+
+	cclicker.mouseout(function(){
+	if (mousedoc == true) {
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=capture_cancel", 'results');
+	this.style.background='white';
+	}
+    return false;
+	});
+	</script>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="zclicker1"><br>Zoom Out<br>FAST
+	<script>
+	var zclicker1 = $('#zclicker1');
+	var mousedoz1 = false;
+	zclicker1.mousedown(function(){
+		this.style.background='grey';
+        window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=wide-fast", 'results');
+		mousedoz1 = true;
+		return false;
+	});
+
+	zclicker1.mouseup(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	mousedoz1 = false;
+    return false;
+	});
+
+	zclicker1.mouseout(function(){
+	if (mousedoz1 == true) {
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	}
+    return false;
+	});
+	</script>
+</div>
+
+<div id="zclicker2"><br>Zoom Out<br>SLOW
+	<script>
+	var zclicker2 = $('#zclicker2');
+	var mousedoz2 = false;
+	zclicker2.mousedown(function(){
+		this.style.background='grey';
+        window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=wide-normal", 'results');
+		mousedoz2 = true;
+		return false;
+	});
+
+	zclicker2.mouseup(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	mousedoz2 = false;
+    return false;
+	});
+	
+	zclicker2.mouseout(function(){
+	if (mousedoz2 == true) {
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	}
+    return false;
+	});
+
+
+	</script>
+</div>
+
+<div id="zclicker3"><br>Zoom In<br>SLOW</div>
+	
+		<script>
+	var ztimeout3, zclicker3 = $('#zclicker3');
+	var mousedoz3 = false;
+	zclicker3.mousedown(function(){
+    window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=tele-normal", 'results');
+	this.style.background='grey';
+	mousedoz3 = true;
+	return false;
+	});
+
+	zclicker3.mouseup(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	mousedoz3 = false;
+    return false;
+	});
+
+	zclicker3.mouseout(function(){
+	if (mousedoz3 == true) {
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	}
+    return false;
+	});
+
+	</script>
+</div>
+
+
+<div id="zclicker4"><br>Zoom In<br>FAST
+
+	<script>
+	var zclicker4 = $('#zclicker4');
+	var mousedoz4 = false;
+	zclicker4.mousedown(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=tele-fast", 'results');
+	this.style.background='grey';
+	mousedoz4 = true;
+	return false;
+	});
+
+	zclicker4.mouseup(function(){
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	mousedoz4 = false;
+    return false;
+	});
+
+	zclicker4.mouseout(function(){
+	if (mousedoz4 == true) {
+	window.open("http://" + lumixaddress + "/cam.cgi?mode=camcmd&value=zoomstop", 'results');
+	this.style.background='white';
+	}
+    return false;
+	});
+
+	</script>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</BODY>
+
+
+
